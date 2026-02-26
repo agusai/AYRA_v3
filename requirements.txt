@@ -12,4 +12,5 @@ requests>=2.31.0
 textblob>=0.17.1
 chromadb>=0.4.0
 sentence-transformers>=2.2.0
-plotly>=5.0.0
+plotly>=5.0.0streamlit
+sentence-transformers

@@ -401,35 +401,33 @@ if prompt := st.chat_input("Type your message..."):
     if egg_response:
         response, model_used = egg_response, "Easter Egg"
     else:
-        # Fatigue
-        now = time.time()
-        st.session_state.last_activity.append(now)
-        st.session_state.last_activity = st.session_state.last_activity[-10:]
+    #    # Fatigue
+    #    now = time.time()
+    #    st.session_state.last_activity.append(now)
+    #    st.session_state.last_activity = st.session_state.last_activity[-10:]
 
-        if st.session_state.fatigue:
-            if now > st.session_state.fatigue_until:
-                st.session_state.fatigue = False
-            else:
-                response = "AYRA: Kejap eh Bang, Ayra nak 'recharge' jap. Abang pun pergilah rehat, asyik tengok skrin jer!"
-                model_used = "Fatigue"
-                st.session_state.chat_history.append({"role": "assistant", "content": response})
-                st.session_state.memory.save_interaction(prompt, response, st.session_state.mood_score, model_used)
-                with st.chat_message("assistant"): st.write(response)
-                st.rerun()
+    #    if st.session_state.fatigue:
+    #        if now > st.session_state.fatigue_until:
+    #            st.session_state.fatigue = False
+    #        else:
+    #            response = "AYRA: Kejap eh Bang, Ayra nak 'recharge' jap. Abang pun pergilah rehat, asyik tengok skrin jer!"
+    #            st.session_state.chat_history.append({"role": "assistant", "content": response})
+    #            st.session_state.memory.save_interaction(prompt, response, st.session_state.mood_score, model_used)
+    #            with st.chat_message("assistant"): st.write(response)
+    #            st.rerun()
 
-        if not st.session_state.fatigue and len(st.session_state.last_activity) >= 5:
-            window = st.session_state.last_activity[-1] - st.session_state.last_activity[-5]
-            if window < 120:
-                st.session_state.fatigue = True
-                st.session_state.fatigue_until = now + 300
-                response = "AYRA: Kejap eh Bang, Ayra nak 'recharge' jap. Abang pun pergilah rehat, asyik tengok skrin jer!"
-                model_used = "Fatigue"
-                st.session_state.chat_history.append({"role": "assistant", "content": response})
-                st.session_state.memory.save_interaction(prompt, response, st.session_state.mood_score, model_used)
-                with st.chat_message("assistant"): st.write(response)
-                st.rerun()
+    #    if not st.session_state.fatigue and len(st.session_state.last_activity) >= 50:
+    #        window = st.session_state.last_activity[-1] - st.session_state.last_activity[-50]
+    #        if window < 120:
+    #            st.session_state.fatigue = True
+    #            response = "AYRA: Kejap eh Bang, Ayra nak 'recharge' jap. Abang pun pergilah rehat, asyik tengok skrin jer!"
+    #            model_used = "Fatigue"
+    #            st.session_state.chat_history.append({"role": "assistant", "content": response})
+    #            st.session_state.memory.save_interaction(prompt, response, st.session_state.mood_score, model_used)
+    #            with st.chat_message("assistant"): st.write(response)
+    #            st.rerun()
 
-        if not st.session_state.fatigue:
+    #    if not st.session_state.fatigue:
             context = st.session_state.memory.get_recent_conversations(limit=5)
             memories = st.session_state.memory.search_memories(prompt)
             mem_text = "\n[Kenangan]:\n" + "\n".join(f"- {m['metadata']['user_msg']}" for m in memories) if memories else ""
@@ -443,7 +441,7 @@ if prompt := st.chat_input("Type your message..."):
             threading.Thread(target=st.session_state.mood.update_from_text, args=(prompt,)).start()
             suggestion = st.session_state.mood.check_suggestion()
             if suggestion and st.session_state.mood.apply_suggestion(suggestion):
-                st.session_state.audit.log("mood_switch", {"to": suggestion['mood']})
+               st.session_state.audit.log("mood_switch", {"to": suggestion['mood']})
 
             st.session_state.memory.save_interaction(prompt, response, st.session_state.mood_score, model_used)
             important = any(w in prompt.lower() for w in ['suka','minat','nama','birthday','janji'])

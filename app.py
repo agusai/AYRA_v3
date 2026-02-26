@@ -19,6 +19,17 @@ from utils.tips_jiji import get_tips_jiji
 load_dotenv()
 
 # -------------------------------------------------------------------
+# Helper function untuk time period
+# -------------------------------------------------------------------
+def get_time_period():
+    hour = datetime.now().hour
+    if 5 <= hour < 12: return "pagi"
+    elif 12 <= hour < 15: return "tengah hari"
+    elif 15 <= hour < 19: return "petang"
+    elif 19 <= hour < 22: return "malam"
+    else: return "lewat malam"
+
+# -------------------------------------------------------------------
 # Initialise components
 # -------------------------------------------------------------------
 if "memory" not in st.session_state:
@@ -33,12 +44,6 @@ if "audit" not in st.session_state:
     st.session_state.audit = AuditLogger()
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
-if "last_activity" not in st.session_state:
-    st.session_state.last_activity = []
-if "fatigue" not in st.session_state:
-    st.session_state.fatigue = False
-if "fatigue_until" not in st.session_state:
-    st.session_state.fatigue_until = 0
 if "mood_score" not in st.session_state:
     st.session_state.mood_score = 0.0
 if "comfort_mode" not in st.session_state:
@@ -241,7 +246,7 @@ with st.sidebar:
     now = datetime.now()
     st.markdown(f"""
     <div style="background-color: rgba(10,26,43,0.4); padding: 10px; border-radius: 10px; margin-bottom: 10px;">
-        <h4 style="color: #d4af37; margin: 0 0 5px 0;">🌤️ MALAM INI</h4>
+        <h4 style="color: #d4af37; margin: 0 0 5px 0;">🌤️ {get_time_period().upper()}</h4>
         <p style="margin: 2px 0;">{now.strftime('%d %b %Y')} · {now.strftime('%I:%M %p')}</p>
         <p style="margin: 2px 0;">Kuala Lumpur · 28°C</p>
     </div>
@@ -321,9 +326,9 @@ st.markdown('</div>', unsafe_allow_html=True)
 # -------------------------------------------------------------------
 # Proactive message check (with guard)
 # -------------------------------------------------------------------
-if not st.session_state.fatigue and not st.session_state.get('analyze_file', False):
+if not st.session_state.get('analyze_file', False):
     if st.session_state.proactive.should_proactive(st.session_state.last_user_time):
-        user_name = st.session_state.memory.get_profile("name") or "Abang/Sayang"
+        user_name = st.session_state.memory.get_profile("name") or "Awak"
         msg = st.session_state.proactive.get_proactive_message(user_name)
         if msg:
             if not st.session_state.chat_history or st.session_state.chat_history[-1].get("content") != msg:
@@ -396,8 +401,8 @@ if prompt := st.chat_input("Type your message..."):
     st.session_state.last_user_time = time.time()
     st.session_state.chat_history.append({"role": "user", "content": prompt})
 
-    # Crisis detection
-    user_name = st.session_state.memory.get_profile("name") or "Abang/Sayang"
+    # Crisis detection - GUNA "Awak" instead of "Abang/Sayang"
+    user_name = st.session_state.memory.get_profile("name") or "Awak"
     if detect_crisis(prompt)[0]:
         crisis_response = format_crisis_response(user_name)
         st.session_state.chat_history.append({"role": "assistant", "content": crisis_response})
@@ -425,7 +430,14 @@ if prompt := st.chat_input("Type your message..."):
             )
             mood_prompt = st.session_state.mood.get_mood_prompt()
             full_context = context + [{"role": "system", "content": mood_prompt + mem_text}]
-            profile = {"name": st.session_state.memory.get_profile("name")}
+            
+            # Profile dengan info masa dan nama neutral
+            now = datetime.now()
+            profile = {
+                "name": st.session_state.memory.get_profile("name") or "Awak",
+                "current_time": now.strftime("%I:%M %p"),
+                "time_period": get_time_period(),
+            }
 
             response, model_used = st.session_state.router.route(prompt, full_context, memory_profile=profile)
             show_info = st.session_state.memory.get_profile("show_model_info") == "True"

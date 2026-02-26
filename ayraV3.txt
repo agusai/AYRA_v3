@@ -1,0 +1,19 @@
+ayra-3.0/
+├── app.py
+├── .env.example
+├── requirements.txt
+├── README.md
+├── utils/
+│   ├── __init__.py
+│   ├── memory_manager.py
+│   ├── mood_detector.py          (gantikan mood_analyzer.py)
+│   ├── model_router.py
+│   ├── prompts.py
+│   ├── helpers.py
+│   ├── crisis_detector.py        (baru)
+│   ├── proactive_engine.py        (baru)
+│   ├── audit_logger.py            (baru)
+│   ├── chroma_vault.py            (baru)
+│   └── consistency_layer.py       (baru)
+└── memory.db
+└── chroma_db/                     (folder untuk Chroma persistence, auto-created)

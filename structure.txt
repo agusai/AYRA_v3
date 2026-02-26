@@ -1,0 +1,17 @@
+ayra-3.0/
+├── app.py
+├── utils/
+│   ├── memory_manager.py
+│   ├── mood_detector.py
+│   ├── model_router.py
+│   ├── prompts.py
+│   ├── helpers.py
+│   ├── crisis_detector.py
+│   ├── proactive_engine.py
+│   ├── audit_logger.py
+│   ├── chroma_vault.py
+│   └── consistency_layer.py
+├── chroma_db/          (auto-created)
+├── memory.db
+├── requirements.txt
+└── .env

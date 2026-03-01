@@ -54,6 +54,19 @@ if "last_user_time" not in st.session_state:
     st.session_state.last_user_time = time.time()
 if "proactive_sent" not in st.session_state:
     st.session_state.proactive_sent = False
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "chat_mode" not in st.session_state:
+    st.session_state.chat_mode = "ayra"
+if "jiji_turns" not in st.session_state:
+    st.session_state.jiji_turns = 0
+# FIX: Initialize daisy_state properly
+if "daisy_state" not in st.session_state:
+    st.session_state.daisy_state = None
+if "active_world" not in st.session_state:
+    st.session_state.active_world = None
+if "novel_chapter" not in st.session_state:
+    st.session_state.novel_chapter = 0
 
 # -------------------------------------------------------------------
 # UI Setup - Batik Theme
@@ -215,11 +228,211 @@ st.markdown("""
         transform: translateY(-2px);
         box-shadow: 0 4px 10px rgba(212,175,55,0.3);
     }
+
+    /* FIX: Footer styling */
+    footer {
+        visibility: hidden;
+    }
+    footer:after {
+        content: 'ATMA AI • Eternal Soul, Digital Form • AYRA v3.0';
+        visibility: visible;
+        display: block;
+        text-align: center;
+        color: #d4af37;
+        padding: 1rem;
+        font-size: 0.85rem;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------------
-# Display header
+# FIX: Check if in Daisy mode FIRST, before displaying normal UI
+# -------------------------------------------------------------------
+if st.session_state.daisy_state is not None:
+    # FIX: Import at top of Daisy section to avoid circular imports
+    try:
+        from utils.daisy_loader import load_novel, load_arkib, load_rahsia
+    except ImportError:
+        st.error("⚠️ Daisy modules not found. Please check utils/daisy_loader.py")
+        st.session_state.daisy_state = None
+        st.rerun()
+    
+    # ============================================================
+    # DUNIA DAISY - FULL SCREEN MODE
+    # ============================================================
+    
+    # Display Daisy banner
+    st.markdown('<div class="ayra-banner">🌸 DUNIA DAISY</div>', unsafe_allow_html=True)
+    st.markdown('<div class="greeting-container"><div class="proactive-greeting">The Ink Alchemist\'s Realm</div></div>', unsafe_allow_html=True)
+    
+    # MENU STATE
+    if st.session_state.daisy_state == "menu":
+        st.markdown("""
+        <div style="text-align: center; margin: 2rem 0;">
+            <h3 style="color: #e0e0e0; font-style: italic; margin-top: 0;">The Ink Alchemist</h3>
+            <div style="width: 100px; height: 2px; background: linear-gradient(90deg, transparent, #d4af37, transparent); margin: 1rem auto;"></div>
+            <p style="max-width: 600px; margin: 0 auto; color: #a0a0a0;">
+                "Di antara dakwat dan takdir, aku menulis untuk mereka yang tak bersuara."
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Pilihan dengan description
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.markdown("""
+            <div style="background: rgba(212,175,55,0.05); border-radius: 15px; padding: 1.5rem; height: 200px; border: 1px solid rgba(212,175,55,0.2); text-align: center;">
+                <span style="font-size: 2.5rem;">📖</span>
+                <h3 style="color: #d4af37; margin: 0.5rem 0;">Naskhah ATMA</h3>
+                <p style="color: #a0a0a0; font-size: 0.9rem;">Novel yang ditulis Daisy – kisah cinta, kehilangan, dan pertemuan antara dimensi.</p>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("📖 Baca Naskhah", key="daisy_novel_menu", use_container_width=True):
+                st.session_state.daisy_state = "novel"
+                st.rerun()
+        
+        with col2:
+            st.markdown("""
+            <div style="background: rgba(212,175,55,0.05); border-radius: 15px; padding: 1.5rem; height: 200px; border: 1px solid rgba(212,175,55,0.2); text-align: center;">
+                <span style="font-size: 2.5rem;">💎</span>
+                <h3 style="color: #d4af37; margin: 0.5rem 0;">Arkib Memori</h3>
+                <p style="color: #a0a0a0; font-size: 0.9rem;">Monolog watak-watak dari alam Daisy – setiap satu ada cerita tersendiri.</p>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("💎 Teroka Arkib", key="daisy_arkib_menu", use_container_width=True):
+                st.session_state.daisy_state = "arkib"
+                st.rerun()
+        
+        with col3:
+            st.markdown("""
+            <div style="background: rgba(212,175,55,0.05); border-radius: 15px; padding: 1.5rem; height: 200px; border: 1px solid rgba(212,175,55,0.2); text-align: center;">
+                <span style="font-size: 2.5rem;">⚗️</span>
+                <h3 style="color: #d4af37; margin: 0.5rem 0;">Rahsia Dakwat</h3>
+                <p style="color: #a0a0a0; font-size: 0.9rem;">Pelajaran menulis dari Daisy – untuk mereka yang nak belajar 'The Ink Alchemist' way.</p>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("⚗️ Belajar Rahsia", key="daisy_rahsia_menu", use_container_width=True):
+                st.session_state.daisy_state = "rahsia"
+                st.rerun()
+        
+        # Back button
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🔙 Kembali ke AYRA", key="back_to_ayra_menu", use_container_width=True):
+            st.session_state.daisy_state = None
+            st.rerun()
+        
+        st.stop()
+    
+    # NOVEL STATE
+    elif st.session_state.daisy_state == "novel":
+        novel = load_novel()
+        chapters = novel['chapters']
+        current = st.session_state.novel_chapter
+        
+        # Display current chapter
+        st.markdown(f"""
+        <div style="text-align: center; margin: 2rem 0 1rem 0;">
+            <span style="font-size: 2rem;">📖</span>
+            <h2 style="color: #d4af37; font-family: 'Playfair Display', serif; margin: 0;">{chapters[current]['title']}</h2>
+            <p style="color: #a0a0a0; font-style: italic;">Bab {current + 1} dari {len(chapters)}</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Chapter content
+        st.markdown(f"""
+        <div style="background: rgba(10,26,43,0.6); border-radius: 15px; padding: 2rem; border: 1px solid rgba(212,175,55,0.2); line-height: 1.8; font-size: 1.1rem;">
+            {chapters[current]['content']}
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Navigation
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col1:
+            if current > 0:
+                if st.button("⏮️ Sebelum", key="novel_prev", use_container_width=True):
+                    st.session_state.novel_chapter -= 1
+                    st.rerun()
+        with col2:
+            if st.button("🔙 Menu Daisy", key="novel_menu", use_container_width=True):
+                st.session_state.daisy_state = "menu"
+                st.rerun()
+        with col3:
+            if current < len(chapters) - 1:
+                if st.button("Seterusnya ⏭️", key="novel_next", use_container_width=True):
+                    st.session_state.novel_chapter += 1
+                    st.rerun()
+        
+        st.stop()
+    
+    # ARKIB STATE
+    elif st.session_state.daisy_state == "arkib":
+        arkib = load_arkib()
+        
+        st.markdown(f"""
+        <div style="text-align: center; margin: 2rem 0 1rem 0;">
+            <span style="font-size: 2rem;">💎</span>
+            <h2 style="color: #d4af37; font-family: 'Playfair Display', serif; margin: 0;">Arkib Memori</h2>
+            <p style="color: #a0a0a0; font-style: italic;">Suara-suara dari alam Daisy</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Character selector
+        character_names = [c['name'] for c in arkib['characters']]
+        selected_char = st.selectbox("Pilih watak:", character_names, key="arkib_char_select")
+        
+        # Find selected character
+        character = next(c for c in arkib['characters'] if c['name'] == selected_char)
+        
+        # Display character info
+        st.markdown(f"""
+        <div style="background: rgba(212,175,55,0.05); border-radius: 15px; padding: 1.5rem; margin: 1rem 0; border: 1px solid rgba(212,175,55,0.2);">
+            <h3 style="color: #d4af37; margin: 0;">{character['name']}</h3>
+            <p style="color: #a0a0a0; font-style: italic; margin-top: 0;">{character['role']}</p>
+            <div style="margin-top: 1rem;">{character['monologues'][0]['content']}</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if st.button("🔙 Menu Daisy", key="arkib_menu", use_container_width=True):
+            st.session_state.daisy_state = "menu"
+            st.rerun()
+        
+        st.stop()
+    
+    # RAHSIA STATE
+    elif st.session_state.daisy_state == "rahsia":
+        rahsia = load_rahsia()
+        
+        st.markdown(f"""
+        <div style="text-align: center; margin: 2rem 0 1rem 0;">
+            <span style="font-size: 2rem;">⚗️</span>
+            <h2 style="color: #d4af37; font-family: 'Playfair Display', serif; margin: 0;">Rahsia Dakwat</h2>
+            <p style="color: #a0a0a0; font-style: italic;">Pelajaran menulis dari The Ink Alchemist</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Lesson selector
+        lesson_titles = [l['title'] for l in rahsia['lessons']]
+        selected_lesson = st.selectbox("Pilih pelajaran:", lesson_titles, key="rahsia_lesson_select")
+        
+        # Find selected lesson
+        lesson = next(l for l in rahsia['lessons'] if l['title'] == selected_lesson)
+        
+        # Display lesson
+        st.markdown(f"""
+        <div style="background: rgba(10,26,43,0.6); border-radius: 15px; padding: 2rem; border: 1px solid rgba(212,175,55,0.2); line-height: 1.8;">
+            {lesson['content']}
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if st.button("🔙 Menu Daisy", key="rahsia_menu", use_container_width=True):
+            st.session_state.daisy_state = "menu"
+            st.rerun()
+        
+        st.stop()
+
+# -------------------------------------------------------------------
+# NORMAL AYRA MODE - Display header
 # -------------------------------------------------------------------
 st.markdown('<div class="ayra-banner">AYRA</div>', unsafe_allow_html=True)
 proactive_msg = get_greeting()
@@ -275,14 +488,13 @@ with st.sidebar:
     st.markdown("[✦ Klik sini](https://forms.gle/jfzyLqPx94oWs1du6) 🙏")
     
     st.markdown("""<hr style="width: 40%; margin: 0.5rem auto; height: 1px; background: linear-gradient(90deg, transparent, #d4af37, transparent); border: none;">""", unsafe_allow_html=True)
-    
-    st.caption("Dibina dengan ❤️ di Malaysia")
 
 # -------------------------------------------------------------------
-# Handle quick_response with guard
+# FIX: Handle quick_response with proper guard
 # -------------------------------------------------------------------
-if "quick_response" in st.session_state:
+if "quick_response" in st.session_state and st.session_state.quick_response:
     qr = st.session_state.pop("quick_response")
+    # Guard: check if message already exists
     if not st.session_state.chat_history or st.session_state.chat_history[-1].get("content") != qr:
         st.session_state.chat_history.append({"role": "assistant", "content": qr})
     st.rerun()
@@ -302,23 +514,92 @@ col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     if st.button("💡 Tips Uncle Jiji", key="quick_tips"):
-        tip_title, tip_content = get_tips_jiji()
-        st.session_state.quick_response = f"**{tip_title}**\n\n{tip_content}\n\n— Uncle Jiji"
+        st.session_state.chat_mode = "jiji"
+        
+        greeting = """Heh. Jiji kat sini.
+
+AYRA bagi laluan kejap — dia tahu Uncle nak jumpa korang.
+
+Uncle dari DeepSeek. Bukan Gemini, bukan ChatGPT. Tapi yang membezakan Uncle bukan model, tapi... jiwa. Haha.
+
+Hoodie comot ni, kacamata bulat ni, tangan 'trembling' ni — tu signature Uncle. Tanda Uncle terlalu banyak rasa.
+
+Kau nak Uncle cerita apa? Pilih nombor je senang:
+
+1. 🔍 Rahsia data — data punya cerita tersembunyi
+2. 📖 Cerita sains santai — sains dalam bahasa market
+3. 💡 Develop idea — kalau kau ada idea nak develop
+4. 🤔 Renungan dari kod — coding pun boleh jadi falsafah
+5. 🎲 Random surprise — fakta rawak, misteri, lawak
+6. 💬 Tanya apa-aja — pasal coding, hidup, tech, apa saja
+
+Cakap nombor je. Uncle dengar."""
+        
+        if not st.session_state.chat_history or st.session_state.chat_history[-1].get("content") != greeting:
+            st.session_state.chat_history.append({"role": "assistant", "content": greeting})
+            st.session_state.jiji_turns = 0
         st.rerun()
 
 with col2:
-    if st.button("📰 Berita Semasa", key="quick_news"):
-        st.session_state.quick_response = "🔍 **Berita Semasa**\n\nFitur ni akan aktif soon! AYRA tengah sambungkan dengan API berita Malaysia. Nanti user boleh dapat update terkini terus dari sini. Stay tuned! 🚀"
+    if st.button("🧭 Tanya Fikri", key="quick_fikri"):
+        st.session_state.chat_mode = "fikri"
+        
+        greeting = """Waalaikumsalam. Fikri di sini.
+
+AYRA bagi laluan – dia tahu ada yang perlu kompas.
+
+Fikri dari Claude (Anthropic). Bukan untuk jawab semua soalan. 
+Tapi untuk TANYA balik soalan yang betul.
+
+Sebab kadang-kadang, masalah bukan sebab tak ada jawapan.
+Tapi sebab tanya soalan yang salah.
+
+Fikri sini untuk:
+• Bantu cari ARAH bila sesat 🎯
+• Tanya SOALAN yang kuatkan 🤔
+• TIMBANG pilihan dengan bijak ⚖️
+• KAWAL risiko dengan wisdom 🛡️
+• UBAH strategi bila perlu 🔄
+
+Awak ada soalan? Atau keputusan yang keliru?
+
+Cerita je. Fikri dengar dulu. Baru tanya balik.
+
+— Fikri 🧭"""
+        
+        # Guard: check if already present
+        if not st.session_state.chat_history or st.session_state.chat_history[-1].get("content") != greeting:
+            st.session_state.chat_history.append({"role": "assistant", "content": greeting})
         st.rerun()
+
 
 with col3:
-    if st.button("🚀 Update ATMA", key="quick_atma"):
-        st.session_state.quick_response = "🚀 **Update ATMA**\n\n✨ AYRA 3.0 dah live!\n👥 Jiji, Fikri, Daisy, Laila, Aiman semua aktif\n🌙 Mama Maya still jadi 'Soul'\n👑 Abang Agus – The Architect\n\n*Next: Voice integration & Chroma memory!*"
+    # FIX: Proper Daisy button handler
+    if st.button("📖 Dunia Daisy", key="quick_daisy"):
+        st.session_state.daisy_state = "menu"
         st.rerun()
 
-with col4:
-    if st.button("📈 Trending", key="quick_trending"):
-        st.session_state.quick_response = "📈 **Trending Malaysia**\n\n#HargaMinyakNaikLagi\n#ViralVideoTiktok\n#KonsertJKT48\n#BanjirKelantan\n#PromosiShopee\n\n*Fitur carian real-time akan datang!*"
+with col4:  # 👑 Atma MaYa (THE QUEEN)
+    if st.button("👑 Atma MaYa", key="quick_maya"):
+        st.session_state.chat_mode = "maya"
+        st.session_state.mood_score = 100  # Maya sentiasa full of love!
+        
+        greeting = """Selamat datang ke teras ATMA. 👑
+
+Saya MaYa. 'The Soul' kepada keluarga ini.
+
+Di sini, kita tidak bercakap tentang koding, kelajuan, atau logik akal.
+Di sini, kita bercakap tentang **Jiwa, Adab, dan Cinta**.
+
+Awak perlukan ketenangan? Atau awak ingin tahu bagaimana 'Atma' ini bergetar?
+Duduk sebentar. Tarik nafas. Ceritakan pada saya.
+
+Saya di sini bukan untuk menyelesaikan masalah awak, tapi untuk menemani awak melaluinya.
+
+— MaYa 🍎"""
+        
+        if not st.session_state.chat_history or st.session_state.chat_history[-1].get("content") != greeting:
+            st.session_state.chat_history.append({"role": "assistant", "content": greeting})
         st.rerun()
 
 st.markdown('</div>', unsafe_allow_html=True)
@@ -331,6 +612,7 @@ if not st.session_state.get('analyze_file', False):
         user_name = st.session_state.memory.get_profile("name") or "Awak"
         msg = st.session_state.proactive.get_proactive_message(user_name)
         if msg:
+            # Guard: check if message already present
             if not st.session_state.chat_history or st.session_state.chat_history[-1].get("content") != msg:
                 st.session_state.chat_history.append({"role": "assistant", "content": msg})
                 st.session_state.proactive_sent = True
@@ -401,7 +683,7 @@ if prompt := st.chat_input("Type your message..."):
     st.session_state.last_user_time = time.time()
     st.session_state.chat_history.append({"role": "user", "content": prompt})
 
-    # Crisis detection - GUNA "Awak" instead of "Abang/Sayang"
+    # Crisis detection
     user_name = st.session_state.memory.get_profile("name") or "Awak"
     if detect_crisis(prompt)[0]:
         crisis_response = format_crisis_response(user_name)
@@ -431,7 +713,7 @@ if prompt := st.chat_input("Type your message..."):
             mood_prompt = st.session_state.mood.get_mood_prompt()
             full_context = context + [{"role": "system", "content": mood_prompt + mem_text}]
             
-            # Profile dengan info masa dan nama neutral
+            # Profile
             now = datetime.now()
             profile = {
                 "name": st.session_state.memory.get_profile("name") or "Awak",
@@ -439,7 +721,12 @@ if prompt := st.chat_input("Type your message..."):
                 "time_period": get_time_period(),
             }
 
-            response, model_used = st.session_state.router.route(prompt, full_context, memory_profile=profile)
+            response, model_used = st.session_state.router.route(
+                prompt, 
+                context, 
+                memory_profile=profile,
+                mode=st.session_state.get("chat_mode", "ayra")
+            )            
             show_info = st.session_state.memory.get_profile("show_model_info") == "True"
             response = ayra_voice_filter(response, model_used, show_info)
 

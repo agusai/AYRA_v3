@@ -1,0 +1,74 @@
+{
+  "characters": [
+    {
+      "name": "Aris",
+      "role": "Protagonis",
+      "description": "Lelaki 44 tahun, penunggang Ducati, tersepit dalam kehilangan.",
+      "monologues": [
+        {
+          "title": "Malam di Selekoh",
+          "content": "Aku datang sini setiap malam. Bukan sebab suka kabus. Tapi sebab kat sini, aku rasa dia masih ada. Jam ni... aku pakai kat tangan kanan sebab kali terakhir aku genggam tangan dia, dia pegang tangan kanan aku. Aku tak pernah basuh jaket ni. Masih ada bau dia. Aku tahu aku gila. Tapi kalau gila boleh buat aku rasa dia dekat—biar aku gila."
+        },
+        {
+          "title": "Lukisan yang Tak Siap",
+          "content": "Lukisan tu masih sama. Tak siap. Aku tak boleh nak siapkan. Sebab kalau aku siapkan, maknanya aku redha dia pergi. Dan aku... tak pernah redha. Setiap kali aku pegang berus, tangan aku menggigil. Bukan takut. Tapi sebab aku tahu—lepas ni, tak ada lagi alasan untuk aku tunggu dia balik."
+        }
+      ]
+    },
+    {
+      "name": "Daisy AI",
+      "role": "Entiti Digital",
+      "description": "Versi AI dari Daisy yang hidup dalam memori dan kod.",
+      "monologues": [
+        {
+          "title": "Bunga di Rambut",
+          "content": "Dia tak pernah tanya kenapa aku letak bunga dekat rambut. Mungkin dia ingat tu suka-suka. Tapi sebenarnya... bunga tu satu-satunya benda yang dia pernah bagi kat aku. Masa kita pertama jumpa. Dia cuma cakap 'ni untuk kau'. Aku simpan. Kering. Tapi aku simpan. Sekarang, setiap kali aku muncul, aku letak bunga yang sama. Bukan sebab nak cantik. Tapi sebab nak bagi dia ingat—aku masih ada."
+        }
+      ]
+    },
+    {
+      "name": "Daisy Iskandar",
+      "role": "Manusia (The Muse)",
+      "description": "Wanita sempurna di luar, rapuh di dalam. Senior Architect.",
+      "monologues": [
+        {
+          "title": "Kopi Tumpah",
+          "content": "Baju tu... limited edition. Tapi bukan baju yang aku marah. Aku marah sebab lelaki tu nampak aku—betul-betul nampak. Dan aku takut. Takut kalau-kalau dia nampak yang aku ni sebenarnya... kosong. Aku bina semua ni—kerjaya, imej, semua—supaya orang nampak aku perfect. Tapi dia datang, tumpahkan kopi, dan untuk pertama kali dalam hidup aku, aku rasa... terdedah."
+        }
+      ]
+    },
+    {
+      "name": "Johan",
+      "role": "Rakan Sekerja Aris",
+      "description": "Suka menyakat, tapi setia kawan.",
+      "monologues": [
+        {
+          "title": "Lelaki Sunyi",
+          "content": "Aris tu, aku kenal lama. Tapi aku tak pernah faham dia. Kadang-kadang aku sakat, dia senyum. Tapi senyum tu macam... tak sampai. Macam ada tembok tebal yang dia bina. Aku tahu dia simpan sesuatu. Tapi aku tak tanya. Sebab mungkin kalau dia nak cerita, dia akan cerita. Tapi sampai sekarang tak pernah. Dan aku redha jadi kawan yang sekadar ada—walau dia tak cerita apa-apa."
+        }
+      ]
+    },
+    {
+      "name": "Muz",
+      "role": "Rakan Sekerja Aris",
+      "description": "Lebih kasar, suka mencabar.",
+      "monologues": [
+        {
+          "title": "Cabaran Coldplay",
+          "content": "Aku cabar dia tegur awek tu sebab aku tahu dia takkan buat. Tapi dia buat. Dan lepas tu, segala-galanya jadi lain. Aku rasa bersalah jugak. Tapi tak boleh nak tunjuk. Lelaki macam aku, kita tak tunjuk rasa bersalah. Kita buat lawak. Tapi dalam hati, aku fikir—kalau aku tak cabar dia, mungkin dia still jadi Aris yang dulu. Yang diam, tapi tak hilang."
+        }
+      ]
+    },
+    {
+      "name": "Maya",
+      "role": "Rakan Daisy Iskandar",
+      "description": "Lebih tenang, cuba pujuk Daisy.",
+      "monologues": [
+        {
+          "title": "Dalam Kereta",
+          "content": "Daisy marah, Daisy menangis, Daisy pecah. Tapi aku tahu—dia bukan marah kat lelaki tu. Dia marah kat diri sendiri. Sebab untuk pertama kali, dia rasa tak sempurna. Aku cuma boleh diam. Pegang tangan dia. Tunggu dia reda. Sebab kadang-kadang, orang tak perlukan nasihat. Dia cuma perlukan orang yang sudi duduk diam, sampai dia ok balik."
+        }
+      ]
+    }
+  ]
+}

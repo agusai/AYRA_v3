@@ -1,103 +1,190 @@
 import os
 import google.generativeai as genai
-import openai
-import anthropic
-from .prompts import AYRA_SYSTEM_PROMPT, DEEPSEEK_PROMPT, CLAUDE_PROMPT, DAISY_PROMPT
+from openai import OpenAI
+from .prompts import AYRA_SYSTEM_PROMPT, JIJI_PROMPT, FIKRI_SYSTEM_PROMPT, MAYA_SYSTEM_PROMPT
+
 
 class ModelRouter:
     def __init__(self):
-        # Gemini
+        # ===== GEMINI (AYRA + FIKRI) =====
         genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-        self.gemini_model = genai.GenerativeModel('gemini-2.5-flash-lite')
+        model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
+        self.gemini_model = genai.GenerativeModel(model_name)
 
-        # DeepSeek
-        self.deepseek_client = None
-        if os.getenv("DEEPSEEK_API_KEY"):
-            self.deepseek_client = openai.OpenAI(
-                api_key=os.getenv("DEEPSEEK_API_KEY"),
-                base_url="https://api.deepseek.com/v1"
+        # ===== OPENROUTER (JIJI) =====
+        self.openrouter_client = None
+        if os.getenv("OPENROUTER_API_KEY"):
+            self.openrouter_client = OpenAI(
+                base_url="https://openrouter.ai/api/v1",
+                api_key=os.getenv("OPENROUTER_API_KEY"),
             )
 
-        # Claude
-        self.claude_client = None
-        if os.getenv("CLAUDE_API_KEY"):
-            self.claude_client = anthropic.Anthropic(api_key=os.getenv("CLAUDE_API_KEY"))
+    # ==========================================================
+    # MAIN ROUTER
+    # ==========================================================
+    def route(self, user_input, context, memory_profile=None, mode="ayra"):
+        text = user_input.lower().strip()
 
-    def route(self, user_input, context, memory_profile=None):
-        lower_input = user_input.lower()
+        # ---- Explicit switch commands ----
+        if text in ["jiji", "uncle jiji", "tips uncle jiji"]:
+            reply = self.call_jiji(user_input, context)
+            return reply, "jiji"
 
-        # Daisy mode (special command or context)
-        if "/daisy-mode" in lower_input:
-            return self.call_daisy(user_input, context), "Daisy (Guardian)"
+        if text in ["fikri", "abang fikri", "tanya fikri"]:
+            reply = self.call_fikri(user_input, context, memory_profile)
+            return reply, "fikri"
 
-        # Coding / technical
-        if any(word in lower_input for word in ["code", "debug", "function", "math", "calculate", "algorithm", "python", "javascript"]):
-            return self.call_deepseek(user_input, context), "DeepSeek (Jiji)"
+        if text in ["ayra", "back to ayra", "panggil ayra"]:
+            import streamlit as st
+            st.session_state.chat_mode = "ayra"  # <-- RESET
+            reply = self.call_gemini(user_input, context, memory_profile)
+            return reply, "ayra"
 
-        # Ethical / professional
-        elif any(word in lower_input for word in ["ethical", "right", "wrong", "moral", "should i", "professional", "report", "document"]):
-            return self.call_claude(user_input, context), "Claude (Fikri)"
+        # ---- Continue current mode ----
+        if mode == "jiji":
+            reply, next_mode = self.call_jiji(user_input, context, allow_reroute=True)
+            return reply, next_mode
+        
+        if mode == "fikri":
+            reply = self.call_fikri(user_input, context, memory_profile)
+            return reply, "fikri"
+        
+        if mode == "maya":
+            reply = self.call_maya(user_input, context)
+            return reply, "maya"
 
-        # Default
-        else:
-            return self.call_gemini(user_input, context, memory_profile), "Gemini (Ayra)"
+        # ---- Default: AYRA ----
+        reply = self.call_gemini(user_input, context, memory_profile)
+        return reply, "ayra"
 
+    # ==========================================================
+    # AYRA (GEMINI)
+    # ==========================================================
     def call_gemini(self, user_input, context, memory_profile=None):
-        prompt = AYRA_SYSTEM_PROMPT + "\n\n"
-        if memory_profile:
-            prompt += f"User profile: {memory_profile}\n"
-        # Add recent context
+        prompt = f"""
+{AYRA_SYSTEM_PROMPT}
+
+[USER MEMORY]
+{memory_profile or "None"}
+
+[CHAT HISTORY]
+"""
+
         for msg in context[-6:]:
-            prompt += f"{msg['role']}: {msg['content']}\n"
+            role = "user" if msg["role"] == "user" else "assistant"
+            prompt += f"{role}: {msg['content'].strip()}\n"
+
         prompt += f"user: {user_input}\nassistant:"
+
         try:
             response = self.gemini_model.generate_content(prompt)
             return response.text
         except Exception as e:
-            return f"Maaf, AYRA ada masalah teknikal: {str(e)}"
+            return f"Maaf, AYRA ada masalah teknikal 😭\n\n{str(e)}"
 
-    def call_deepseek(self, user_input, context):
-        if not self.deepseek_client:
-            return "(Jiji mode) DeepSeek API key tidak dijumpa. Sila set DEEPSEEK_API_KEY dalam .env"
-        messages = [{"role": "system", "content": DEEPSEEK_PROMPT}]
-        for msg in context:
-            messages.append({"role": msg["role"], "content": msg["content"]})
-        messages.append({"role": "user", "content": user_input})
-        try:
-            response = self.deepseek_client.chat.completions.create(
-                model="deepseek-chat",
-                messages=messages
-            )
-            return response.choices[0].message.content
-        except Exception as e:
-            return f"(Jiji mode) Error: {str(e)}"
+    # ==========================================================
+    # JIJI (OPENROUTER)
+    # ==========================================================
+    def call_jiji(self, user_input, context, allow_reroute=False):
+        if not self.openrouter_client:
+            return "Uncle Jiji tak boleh datang sekarang. API key OpenRouter tak jumpa.", "ayra"
 
-    def call_claude(self, user_input, context):
-        if not self.claude_client:
-            return "(Fikri mode) Claude API key tidak dijumpa. Sila set CLAUDE_API_KEY dalam .env"
-        prompt = CLAUDE_PROMPT + "\n\n"
-        for msg in context:
-            prompt += f"{msg['role']}: {msg['content']}\n"
+        # ---- Reroute back to AYRA ----
+        if allow_reroute and user_input.lower().strip() in ["ayra", "panggil ayra", "back to ayra"]:
+            import streamlit as st
+            st.session_state.chat_mode = "ayra"  # <-- RESET
+            farewell = "Ok ok 😄 Uncle undur diri dulu.\nAYRA! Tolong ambil alih ya.\n\n— Uncle Jiji 👋"
+            return farewell, "ayra"
+
+        prompt = f"""
+{JIJI_PROMPT}
+
+[CHAT HISTORY]
+"""
+        for msg in context[-5:]:
+            role = "user" if msg["role"] == "user" else "assistant"
+            prompt += f"{role}: {msg['content'].strip()}\n"
+
         prompt += f"user: {user_input}\nassistant:"
-        try:
-            response = self.claude_client.messages.create(
-                model="claude-3-opus-20240229",
-                max_tokens=1024,
-                messages=[{"role": "user", "content": prompt}]
-            )
-            return response.content[0].text
-        except Exception as e:
-            return f"(Fikri mode) Error: {str(e)}"
 
-    def call_daisy(self, user_input, context):
-        """Special Daisy mode – gentle, guardian."""
-        prompt = DAISY_PROMPT + "\n\n"
-        for msg in context:
-            prompt += f"{msg['role']}: {msg['content']}\n"
-        prompt += f"user: {user_input}\nassistant:"
-        # Use Gemini for Daisy (or could use a separate instance)
         try:
-            response = self.gemini_model.generate_content(prompt)
+            response = self.openrouter_client.chat.completions.create(
+                model=os.getenv("JIJI_MODEL", "arcee-ai/trinity-large-preview:free"),
+                messages=[{"role": "user", "content": prompt}],
+            )
+
+            content = response.choices[0].message.content
+            if "— Uncle Jiji" not in content:
+                footer = "\n\n— Uncle Jiji\n\n*Ada apa-apa lagi nak tanya kat Uncle? Pilih nombor lain atau tanya apa-aja.*"
+                content += footer
+            return content, "jiji"
+
+        except Exception as e:
+            return f"Aduh, line Uncle jam sikit 😵\n\n{str(e)}", "jiji"
+
+    # ==========================================================
+    # FIKRI (GEMINI - Strategic Mode)
+    # ==========================================================
+    def call_fikri(self, user_input, context, memory_profile=None):
+        """
+        Call Fikri (The Compass) for strategic guidance.
+        Uses Gemini but with Fikri's strategic prompt.
+        """
+        try:
+            from .fikri_module import get_fikri_engine
+            
+            # Get Fikri engine
+            fikri = get_fikri_engine()
+            
+            # Generate strategic prompt
+            strategic_prompt = fikri.generate_strategic_prompt(user_input, context)
+            
+            # Build full prompt with system identity
+            full_prompt = f"""
+{FIKRI_SYSTEM_PROMPT}
+
+{strategic_prompt}
+"""
+            
+            # Use Gemini for now (can upgrade to Claude later)
+            response = self.gemini_model.generate_content(full_prompt)
             return response.text
+            
         except Exception as e:
-            return f"🌸 Daisy: Maaf, ada masalah teknikal: {str(e)}"
+            # Fallback: Use simple Fikri response without engine
+            simple_prompt = f"""
+{FIKRI_SYSTEM_PROMPT}
+
+User asks: {user_input}
+
+Respond as Fikri with strategic questions (not direct answers).
+Keep it brief (200-300 words).
+End with: — Fikri 🧭
+"""
+            try:
+                response = self.gemini_model.generate_content(simple_prompt)
+                return response.text
+            except:
+                return f"Maaf, Fikri ada technical issue sebentar 🧭\n\n{str(e)}"
+            
+
+    # ==========================================================
+    # MAYA (THE SOUL)
+    # ==========================================================
+    def call_maya(self, user_input, context):
+        try:
+            if self.openrouter_client:
+                response = self.openrouter_client.chat.completions.create(
+                    model="arcee-ai/trinity-large-preview:free",
+                    messages=[
+                        {"role": "system", "content": MAYA_SYSTEM_PROMPT},
+                        {"role": "user", "content": f"User: {user_input}"}
+                    ]
+                )
+                return response.choices[0].message.content
+            else:
+                full_prompt = f"{MAYA_SYSTEM_PROMPT}\n\nUser: {user_input}"
+                response = self.gemini_model.generate_content(full_prompt)
+                return response.text
+        except Exception as e:
+            return "Maaf, litar jiwa saya perlu rehat sebentar. Panggil saya lagi nanti ya? — MaYa 🍎"

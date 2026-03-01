@@ -20,7 +20,7 @@ def detect_crisis(text):
             return True, kw
     return False, None
 
-def format_crisis_response(user_name="Sayang"):
+def format_crisis_response(user_name="awak"):
     """Return a caring crisis response with hotlines."""
     hotline_text = "\n".join([f"• {name}: {num}" for name, num in HOTLINES.items()])
     return f"""

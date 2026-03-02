@@ -231,7 +231,7 @@ st.markdown("""
 
     /* FIX: Footer styling */
     footer {
-        visibility: hidden;
+        visibility: visible;
     }
     footer:after {
         content: 'ATMA AI • Eternal Soul, Digital Form • AYRA v3.0';
@@ -513,7 +513,7 @@ st.markdown('<div class="quick-actions-container">', unsafe_allow_html=True)
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    if st.button("💡 Tips Uncle Jiji", key="quick_tips"):
+    if st.button("🔍 Tech", key="quick_tips"):
         st.session_state.chat_mode = "jiji"
         
         greeting = """Heh. Jiji kat sini.
@@ -541,7 +541,7 @@ Cakap nombor je. Uncle dengar."""
         st.rerun()
 
 with col2:
-    if st.button("🧭 Tanya Fikri", key="quick_fikri"):
+    if st.button("🧭Guide", key="quick_fikri"):
         st.session_state.chat_mode = "fikri"
         
         greeting = """Waalaikumsalam. Fikri di sini.
@@ -575,12 +575,12 @@ Cerita je. Fikri dengar dulu. Baru tanya balik.
 
 with col3:
     # FIX: Proper Daisy button handler
-    if st.button("📖 Dunia Daisy", key="quick_daisy"):
+    if st.button("✨ Creative", key="quick_daisy"):
         st.session_state.daisy_state = "menu"
         st.rerun()
 
 with col4:  # 👑 Atma MaYa (THE QUEEN)
-    if st.button("👑 Atma MaYa", key="quick_maya"):
+    if st.button("🍎 Soul", key="quick_maya"):
         st.session_state.chat_mode = "maya"
         st.session_state.mood_score = 100  # Maya sentiasa full of love!
         
